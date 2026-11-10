@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Control de Asistencia</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+:root{
+  --azul:#1e4b8f;
+  --azul-2:#2f6ac4;
+  --azul-suave:#eaf1fb;
+  --verde:#1f8a4c;
+  --rojo:#c0392b;
+  --ambar:#b26a00;
+  --texto:#1c2733;
+  --texto-2:#5b6674;
+  --linea:#d7dee8;
+  --fondo:#eef2f7;
+  --blanco:#ffffff;
+  --radio:14px;
+  --sombra:0 8px 26px rgba(23,43,77,.08);
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  min-height:100vh;
+  padding:22px 14px 70px;
+  font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  color:var(--texto);
+  background:radial-gradient(1200px 600px at 50% -10%,#dbe7f8 0%,rgba(219,231,248,0) 70%),var(--fondo);
+  -webkit-font-smoothing:antialiased;
+}
+
+.wrap{
+  max-width:1000px;
+  margin:0 auto;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+
+.card{
+  background:var(--blanco);
+  border:1px solid var(--linea);
+  border-radius:var(--radio);
+  box-shadow:var(--sombra);
+}
+
+/* ---------- Cabecera ---------- */
+.head{
+  display:flex;
+  flex-wrap:wrap;
+  gap:18px;
+  justify-content:space-between;
+  align-items:flex-end;
+  padding:22px 24px;
+  border:0;
+  border-radius:var(--radio);
+  color:#fff;
+  background:linear-gradient(135deg,#1e4b8f 0%,#2a63b8 100%);
+  box-shadow:0 10px 30px rgba(23,58,120,.25);
+}
+
+.head-main{min-width:260px}
+
+.eyebrow{
+  margin:0 0 6px;
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  opacity:.78;
+}
+
+.head h1{
+  margin:0;
+  font-size:24px;
+  font-weight:700;
+  line-height:1.2;
+  letter-spacing:-.01em;
+}
+
+.head h1 .curso{font-weight:400;opacity:.92}
+
+.prof{margin:8px 0 0;font-size:14px;opacity:.92}
+.prof strong{font-weight:600}
+
+.head-date{display:flex;flex-direction:column;gap:6px;min-width:200px}
+
+.head-date label{
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  opacity:.8;
+}
+
+.head-date input{
+  padding:10px 12px;
+  font:inherit;
+  font-size:16px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.35);
+  background:rgba(255,255,255,.14);
+  color:#fff;
+}
+
+.head-date input::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.9;cursor:pointer}
+
+.fecha-larga{font-size:12px;opacity:.85}
+
+/* ---------- Contadores ---------- */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+}
+
+.chip{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  padding:12px 14px;
+  background:var(--blanco);
+  border:1px solid var(--linea);
+  border-radius:12px;
+  box-shadow:0 2px 10px rgba(23,43,77,.05);
+}
+
+.chip b{font-size:22px;font-weight:700;line-height:1}
+.chip span{
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--texto-2);
+}
+
+.chip.verde b{color:var(--verde)}
+.chip.rojo b{color:var(--rojo)}
+.chip.ambar b{color:var(--ambar)}
+.chip.azul b{color:var(--azul)}
+
+/* ---------- Avisos ---------- */
+.aviso{
+  display:none;
+  padding:14px 16px;
+  font-size:14px;
+  line-height:1.5;
+  border:1px solid transparent;
+  border-radius:12px;
+}
+.aviso.show{display:block}
+.aviso.info{background:var(--azul-suave);border-color:#c5d8f2;color:#173d75}
+.aviso.warn{background:#fdf1de;border-color:#f0d3a2;color:#7a4a00}
+.aviso p{margin:0 0 10px}
+.aviso p:last-child{margin-bottom:0}
+.aviso code{
+  padding:1px 5px;
+  font-family:Consolas,"Courier New",monospace;
+  font-size:.92em;
+  background:rgba(255,255,255,.75);
+  border-radius:5px;
+}
+.aviso-acciones{display:flex;flex-wrap:wrap;gap:8px}
+.aviso-acciones .btn{background:#fff}
+
+/* ---------- Barra de herramientas ---------- */
+.toolbar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+  padding:14px 16px;
+  border-bottom:1px solid var(--linea);
+}
+
+.toolbar .espacio{flex:1}
+
+.btn{
+  display:inline-flex;
+  gap:6px;
+  align-items:center;
+  padding:9px 14px;
+  font:inherit;
+  font-size:13.5px;
+  font-weight:600;
+  color:var(--texto);
+  background:#fff;
+  border:1px solid var(--linea);
+  border-radius:10px;
+  cursor:pointer;
+  transition:background .15s,border-color .15s,transform .05s;
+}
+
+.btn:hover{background:#f4f7fb;border-color:#c3cfdf}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn:focus-visible{outline:2px solid var(--azul-2);outline-offset:2px}
+
+.btn-primario{background:var(--azul);border-color:var(--azul);color:#fff}
+.btn-primario:hover{background:#173c74;border-color:#173c74}
+.btn-verde{background:var(--verde);border-color:var(--verde);color:#fff}
+.btn-verde:hover{background:#186f3d;border-color:#186f3d}
+.btn-grande{padding:12px 22px;font-size:15px;border-radius:12px}
+
+/* ---------- Tabla ---------- */
+.tabla-wrap{overflow:hidden;border-radius:0 0 var(--radio) var(--radio)}
+
+table{width:100%;border-collapse:collapse}
+table[hidden]{display:none}
+
+thead th{
+  position:sticky;
+  top:0;
+  z-index:2;
+  padding:12px 16px;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+  text-align:left;
+  color:var(--texto-2);
+  background:#f2f6fc;
+  border-bottom:1px solid var(--linea);
+}
+
+tbody td{
+  padding:11px 16px;
+  vertical-align:middle;
+  border-bottom:1px solid #edf1f6;
+}
+
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:#f7fafd}
+tbody tr[data-estado="ausente"]{background:#fdf6f5}
+tbody tr[data-estado="tarde"]{background:#fdfaf3}
+tbody tr[data-estado="ausente"]:hover{background:#fbeae7}
+tbody tr[data-estado="tarde"]:hover{background:#fbf3e5}
+
+td.num{
+  width:52px;
+  font-size:13px;
+  color:#8794a6;
+  font-variant-numeric:tabular-nums;
+}
+
+td.alumno{font-size:14.5px;font-weight:600;letter-spacing:.01em}
+
+/* ---------- Selector Presente / Ausente / Tarde ---------- */
+.seg{
+  display:inline-flex;
+  gap:2px;
+  padding:2px;
+  background:#f7f9fc;
+  border:1px solid var(--linea);
+  border-radius:10px;
+}
+
+.seg input{
+  position:absolute;
+  width:1px;
+  height:1px;
+  opacity:0;
+  pointer-events:none;
+}
+
+.seg label{
+  padding:7px 12px;
+  font-size:13px;
+  font-weight:600;
+  color:var(--texto-2);
+  border-radius:8px;
+  cursor:pointer;
+  white-space:nowrap;
+  user-select:none;
+  transition:background .15s,color .15s;
+}
+
+.seg label:hover{background:#e9eff8}
+.seg input:focus-visible + label{outline:2px solid var(--azul-2);outline-offset:1px}
+.seg input:checked + label{color:#fff}
+.seg input[value="presente"]:checked + label{background:var(--verde)}
+.seg input[value="ausente"]:checked + label{background:var(--rojo)}
+.seg input[value="tarde"]:checked + label{background:var(--ambar)}
+
+/* ---------- Observaciones / pie ---------- */
+.obs{padding:16px 18px}
+.obs label{
+  display:block;
+  margin-bottom:8px;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+  color:var(--texto-2);
+}
+.obs textarea{
+  width:100%;
+  min-height:74px;
+  padding:10px 12px;
+  font:inherit;
+  font-size:14px;
+  color:var(--texto);
+  background:#fbfcfe;
+  border:1px solid var(--linea);
+  border-radius:10px;
+  resize:vertical;
+}
+.obs textarea:focus{outline:2px solid var(--azul-2);outline-offset:1px;background:#fff}
+
+.acciones{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+
+.estado{
+  min-height:20px;
+  margin:0;
+  font-size:13px;
+  text-align:center;
+  color:var(--texto-2);
+}
+.estado.ok{color:var(--verde)}
+.estado.aviso{color:var(--ambar)}
+
+.vacio{
+  margin:0;
+  padding:34px 20px;
+  font-size:15px;
+  color:var(--texto-2);
+  text-align:center;
+}
+.vacio[hidden]{display:none}
+
+.ayuda{padding:0}
+.ayuda summary{
+  padding:14px 18px;
+  font-size:13.5px;
+  font-weight:600;
+  color:var(--texto-2);
+  cursor:pointer;
+  list-style:none;
+}
+.ayuda summary::-webkit-details-marker{display:none}
+.ayuda summary::before{content:"▸ ";color:var(--azul-2)}
+.ayuda[open] summary::before{content:"▾ "}
+.ayuda .cuerpo-ayuda{
+  padding:0 20px 18px;
+  font-size:13.5px;
+  line-height:1.6;
+  color:var(--texto-2);
+}
+.ayuda ol{margin:0;padding-left:20px}
+.ayuda li{margin-bottom:6px}
+.ayuda code{
+  padding:1px 5px;
+  font-family:Consolas,"Courier New",monospace;
+  background:#eef3fa;
+  border-radius:5px;
+}
+
+/* ---------- Móvil ---------- */
+@media (max-width:640px){
+  body{padding:14px 10px 60px}
+  .head{padding:18px 16px}
+  .head h1{font-size:20px}
+  .head-date{width:100%}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .chip{padding:10px 12px}
+  .chip b{font-size:19px}
+
+  table,tbody,tr,td{display:block}
+  thead{display:none}
+  tbody tr{position:relative;padding:13px 14px 14px;border-bottom:1px solid var(--linea)}
+  tbody td{padding:0;border:0}
+  td.num{position:absolute;top:14px;right:14px;width:auto;font-size:11px;color:#9aa6b6}
+  td.num::after{content:"."}
+  td.alumno{padding-right:34px;font-size:14px;line-height:1.35}
+  td.marca{margin-top:10px}
+  .seg{display:flex;width:100%}
+  .seg label{flex:1;text-align:center}
+  .acciones .btn{width:100%;justify-content:center}
+}
+
+/* ---------- Impresión ---------- */
+@media print{
+  body{padding:0;background:#fff;font-size:12px}
+  .no-print{display:none !important}
+  .card{box-shadow:none;border:0;border-radius:0}
+  .head{background:#fff;color:#000;box-shadow:none;border-bottom:2px solid #000;border-radius:0;padding:0 0 12px}
+  .head-date input{border:0;background:none;color:#000;padding-left:0}
+  .head-date{min-width:0}
+  .tabla-wrap{overflow:visible}
+  thead th{background:#eee;color:#000;border-bottom:1px solid #000}
+  tbody td{border-bottom:1px solid #ccc}
+  tbody tr[data-estado]{background:#fff !important}
+  .seg{display:inline;border:0;background:none;padding:0}
+  .seg input:not(:checked) + label{display:none}
+  .seg input[value="presente"]:checked + label,
+  .seg input[value="ausente"]:checked + label,
+  .seg input[value="tarde"]:checked + label{
+    display:inline-block;
+    padding:2px 8px;
+    color:#000;
+    background:#fff;
+    border:1px solid #000;
+    border-radius:6px;
+    font-size:11px;
+  }
+  .obs textarea{border:1px solid #999;background:#fff}
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <header class="card head">
+    <div class="head-main">
+      <p class="eyebrow" id="institucion">Control de asistencia diaria</p>
+      <h1>Control de Asistencia <span class="curso" id="curso"></span></h1>
+      <p class="prof">Profesora: <strong id="profesora">—</strong></p>
+    </div>
+    <div class="head-date">
+      <label for="fecha">Fecha</label>
+      <input type="date" id="fecha">
+      <span class="fecha-larga" id="fechaLarga"></span>
+    </div>
+  </header>
+
+  <div class="stats" aria-live="polite">
+    <div class="chip verde"><b id="nPresente">0</b><span>Presentes</span></div>
+    <div class="chip rojo"><b id="nAusente">0</b><span>Ausentes</span></div>
+    <div class="chip ambar"><b id="nTarde">0</b><span>Tardes</span></div>
+    <div class="chip azul"><b id="nTotal">0</b><span>Total alumnos</span></div>
+  </div>
+
+  <div class="aviso no-print" id="aviso">
+    <p id="avisoTexto"></p>
+    <div class="aviso-acciones" id="avisoAcciones"></div>
+  </div>
+
+  <section class="card">
+    <div class="toolbar no-print">
+      <button type="button" class="btn" id="btnTodosPresentes">Todos presentes</button>
+      <button type="button" class="btn" id="btnTodosAusentes">Todos ausentes</button>
+      <span class="espacio"></span>
+      <button type="button" class="btn" id="btnCargar">Cargar alumnos.json</button>
+    </div>
+
+    <div class="tabla-wrap">
+      <table id="tabla" hidden>
+        <thead>
+          <tr>
+            <th scope="col">N°</th>
+            <th scope="col">Alumno</th>
+            <th scope="col">Asistencia</th>
+          </tr>
+        </thead>
+        <tbody id="cuerpo"></tbody>
+      </table>
+      <p class="vacio" id="vacio" hidden></p>
+    </div>
+  </section>
+
+  <section class="card obs">
+    <label for="observaciones">Observaciones del día (opcional)</label>
+    <textarea id="observaciones" placeholder="Ej.: se retiró antes del recreo, llegó con permiso, etc."></textarea>
+  </section>
+
+  <div class="acciones no-print">
+    <button type="button" class="btn btn-primario btn-grande" id="btnPDF">Guardar en PDF</button>
+    <button type="button" class="btn btn-grande" id="btnCSV">Exportar CSV</button>
+    <button type="button" class="btn btn-grande" id="btnImprimir">Imprimir</button>
+  </div>
+
+  <p class="estado" id="estado"></p>
+
+  <details class="card ayuda no-print">
+    <summary>Cómo editar la lista de alumnos</summary>
+    <div class="cuerpo-ayuda">
+      <ol>
+        <li>Abre el archivo <code>alumnos.json</code> con el Bloc de notas (clic derecho → Abrir con).</li>
+        <li>Cambia los nombres dentro de las comillas. Cada alumno va entre <code>" "</code> y separado por una coma. Respeta la coma final del último nombre anterior.</li>
+        <li>Guarda el archivo con codificación <strong>UTF-8</strong>.</li>
+        <li>Abre <code>lista.html</code> y pulsa <strong>Cargar alumnos.json</strong> (también puedes arrastrar el archivo sobre la página). La lista queda recordada en este navegador.</li>
+      </ol>
+      <p style="margin:12px 0 0">La lista siempre se muestra en <strong>orden alfabético</strong> (por apellido), sin importar el orden en que estén escritos los nombres en el archivo.</p>
+      <p style="margin:8px 0 0">Consejo: si guardas los dos archivos en una carpeta y abres la página desde un servidor local (por ejemplo <code>python -m http.server</code>), la lista se carga sola y los cambios se ven al recargar.</p>
+    </div>
+  </details>
+
+  <input type="file" id="fileJSON" accept=".json,application/json" hidden>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var ESTADOS = ['presente', 'ausente', 'tarde'];
+var ETIQUETAS = { presente: 'Presente', ausente: 'Ausente', tarde: 'Tarde' };
+var COLORES = { presente: [31, 138, 76], ausente: [192, 57, 43], tarde: [178, 106, 0] };
+
+var PREFIJO = 'asistencia.v1:' + location.pathname + ':';
+var K_LISTA = PREFIJO + 'lista';
+var K_BORRADOR = PREFIJO + 'borrador:';
+var ES_LOCAL = location.protocol === 'file:';
+
+var el = {
+  institucion: document.getElementById('institucion'),
+  curso: document.getElementById('curso'),
+  profesora: document.getElementById('profesora'),
+  fecha: document.getElementById('fecha'),
+  fechaLarga: document.getElementById('fechaLarga'),
+  aviso: document.getElementById('aviso'),
+  avisoTexto: document.getElementById('avisoTexto'),
+  avisoAcciones: document.getElementById('avisoAcciones'),
+  tabla: document.getElementById('tabla'),
+  cuerpo: document.getElementById('cuerpo'),
+  vacio: document.getElementById('vacio'),
+  observaciones: document.getElementById('observaciones'),
+  estado: document.getElementById('estado'),
+  nPresente: document.getElementById('nPresente'),
+  nAusente: document.getElementById('nAusente'),
+  nTarde: document.getElementById('nTarde'),
+  nTotal: document.getElementById('nTotal'),
+  fileJSON: document.getElementById('fileJSON'),
+  btnTodosPresentes: document.getElementById('btnTodosPresentes'),
+  btnTodosAusentes: document.getElementById('btnTodosAusentes'),
+  btnCargar: document.getElementById('btnCargar'),
+  btnPDF: document.getElementById('btnPDF'),
+  btnCSV: document.getElementById('btnCSV'),
+  btnImprimir: document.getElementById('btnImprimir')
+};
+
+var datos = { institucion: '', curso: '', profesora: '', alumnos: [] };
+var alumnos = [];
+var marcas = [];
+var origenLista = 'ninguno';
+var timerGuardado = 0;
+
+/* ============================ Utilidades ============================ */
+
+function lsGet(clave){ try { return localStorage.getItem(clave); } catch (e) { return null; } }
+function lsSet(clave, valor){ try { localStorage.setItem(clave, valor); return true; } catch (e) { return false; } }
+
+function esc(texto){
+  return String(texto).replace(/[&<>"']/g, function(c){
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+function isoLocal(d){
+  function p(n){ return String(n).padStart(2, '0'); }
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+}
+
+function fechaLarga(iso){
+  if (!iso) return '';
+  var fecha = new Date(iso + 'T12:00:00');
+  if (isNaN(fecha)) return iso;
+  var texto;
+  try {
+    texto = new Intl.DateTimeFormat('es-BO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(fecha);
+  } catch (e) {
+    texto = fecha.getDate() + '/' + (fecha.getMonth() + 1) + '/' + fecha.getFullYear();
+  }
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
+function huellaLista(nombres){
+  var s = nombres.join('\u0001');
+  var h = 5381;
+  for (var i = 0; i < s.length; i++) { h = ((h * 33) ^ s.charCodeAt(i)) >>> 0; }
+  return h.toString(36) + ':' + s.length;
+}
+
+function slug(texto){
+  var limpio = String(texto || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^0-9A-Za-z]+/g, '');
+  return limpio || 'curso';
+}
+
+function nombreArchivo(extension){
+  var fecha = el.fecha.value || isoLocal(new Date());
+  return 'Asistencia_' + slug(datos.curso) + '_' + fecha + '.' + extension;
+}
+
+function descargar(blob, nombre){
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = nombre;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+}
+
+function mostrarEstado(texto, tipo){
+  el.estado.textContent = texto || '';
+  el.estado.className = 'estado' + (tipo ? ' ' + tipo : '');
+}
+
+/* ============================ Lista de alumnos ============================ */
+
+var COLADOR = new Intl.Collator('es', { sensitivity: 'base', numeric: true });
+
+function ordenarAlumnos(lista){
+  return lista.sort(function(a, b){ return COLADOR.compare(a, b); });
+}
+
+function normalizar(json){
+  var bruto = Array.isArray(json) ? json : (json && json.alumnos);
+  if (!Array.isArray(bruto)) {
+    throw new Error('El archivo no tiene la lista "alumnos".');
+  }
+  var lista = bruto.map(function(a){
+    if (typeof a === 'string') return a;
+    if (a && typeof a === 'object') return a.nombre || a.nombres || '';
+    return '';
+  }).map(function(s){
+    return String(s).replace(/\s+/g, ' ').trim();
+  }).filter(Boolean);
+
+  if (!lista.length) throw new Error('La lista de alumnos está vacía.');
+
+  function texto(v){ return typeof v === 'string' ? v.trim() : (v == null ? '' : String(v)); }
+
+  return {
+    institucion: texto(json && json.institucion),
+    curso: texto(json && json.curso),
+    profesora: texto(json && json.profesora),
+    alumnos: ordenarAlumnos(lista)
+  };
+}
+
+function pintarVacio(mensaje, conBoton){
+  el.vacio.hidden = false;
+  el.vacio.innerHTML = esc(mensaje) + (conBoton
+    ? ' <button type="button" class="btn" data-accion="cargar">Cargar alumnos.json</button>'
+    : '');
+  el.tabla.hidden = true;
+}
+
+function aplicarLista(lista, origen){
+  datos = lista;
+  alumnos = lista.alumnos.slice();
+  origenLista = origen;
+
+  document.title = 'Control de Asistencia' + (datos.curso ? ' · ' + datos.curso : '');
+  el.curso.textContent = datos.curso ? '· ' + datos.curso : '';
+  el.profesora.textContent = datos.profesora || '—';
+  el.institucion.textContent = datos.institucion || 'Control de asistencia diaria';
+
+  marcas = alumnos.map(function(){ return 'presente'; });
+  renderTabla();
+
+  el.vacio.hidden = true;
+  el.tabla.hidden = false;
+  el.btnPDF.disabled = false;
+  el.btnCSV.disabled = false;
+
+  cargarBorrador(el.fecha.value);
+  actualizarStats();
+  actualizarAviso();
+}
+
+async function cargarListaInicial(){
+  var lista = null;
+  var origen = 'ninguno';
+
+  if (!ES_LOCAL) {
+    try {
+      var respuesta = await fetch('alumnos.json', { cache: 'no-store' });
+      if (!respuesta.ok) throw new Error('HTTP ' + respuesta.status);
+      lista = normalizar(await respuesta.json());
+      origen = 'archivo';
+    } catch (e) {
+      console.warn('No se pudo leer alumnos.json:', e);
+    }
+  }
+
+  if (!lista) {
+    var guardada = lsGet(K_LISTA);
+    if (guardada) {
+      try { lista = normalizar(JSON.parse(guardada)); origen = 'cache'; } catch (e) { lista = null; }
+    }
+  }
+
+  if (lista) {
+    aplicarLista(lista, origen);
+    if (origen === 'archivo') mostrarEstado('Lista cargada: ' + alumnos.length + ' alumnos.');
+  } else {
+    el.btnPDF.disabled = true;
+    el.btnCSV.disabled = true;
+    el.nTotal.textContent = '0';
+    pintarVacio('Aún no hay alumnos cargados.', true);
+    actualizarAviso();
+    mostrarEstado('Carga el archivo alumnos.json para comenzar.');
+  }
+}
+
+async function leerArchivoJSON(archivo){
+  try {
+    var texto = await archivo.text();
+    var lista = normalizar(JSON.parse(texto));
+    lsSet(K_LISTA, JSON.stringify(lista));
+    aplicarLista(lista, 'manual');
+    mostrarEstado('Lista cargada desde ' + archivo.name + ' (' + lista.alumnos.length + ' alumnos).', 'ok');
+  } catch (e) {
+    alert('No se pudo leer el archivo:\n\n' + e.message + '\n\nRevisa que sea un JSON válido (comillas dobles y comas).');
+  }
+}
+
+/* ============================ Tabla y marcas ============================ */
+
+function renderTabla(){
+  var html = '';
+  for (var i = 0; i < alumnos.length; i++) {
+    var marca = marcas[i] || 'presente';
+    html += '<tr data-i="' + i + '" data-estado="' + marca + '">'
+      + '<td class="num">' + (i + 1) + '</td>'
+      + '<td class="alumno">' + esc(alumnos[i]) + '</td>'
+      + '<td class="marca"><div class="seg" role="radiogroup" aria-label="Asistencia de ' + esc(alumnos[i]) + '">';
+
+    for (var j = 0; j < ESTADOS.length; j++) {
+      var valor = ESTADOS[j];
+      html += '<input type="radio" name="a' + i + '" id="a' + i + '-' + valor + '" value="' + valor + '"'
+        + (marca === valor ? ' checked' : '') + '>'
+        + '<label for="a' + i + '-' + valor + '">' + ETIQUETAS[valor] + '</label>';
+    }
+
+    html += '</div></td></tr>';
+  }
+  el.cuerpo.innerHTML = html;
+}
+
+function sincronizarRadios(){
+  var filas = el.cuerpo.querySelectorAll('tr');
+  for (var i = 0; i < filas.length; i++) {
+    var fila = filas[i];
+    var indice = Number(fila.dataset.i);
+    var valor = marcas[indice] || 'presente';
+    fila.dataset.estado = valor;
+    var input = fila.querySelector('input[value="' + valor + '"]');
+    if (input) input.checked = true;
+  }
+}
+
+function marcarTodos(valor){
+  if (!alumnos.length) return;
+  for (var i = 0; i < marcas.length; i++) marcas[i] = valor;
+  sincronizarRadios();
+  actualizarStats();
+  guardarBorrador();
+  mostrarEstado('Se marcaron ' + alumnos.length + ' alumnos como "' + ETIQUETAS[valor] + '".');
+}
+
+function contar(){
+  var c = { presente: 0, ausente: 0, tarde: 0, total: alumnos.length };
+  for (var i = 0; i < alumnos.length; i++) {
+    var m = marcas[i] || 'presente';
+    if (ESTADOS.indexOf(m) !== -1) c[m]++;
+  }
+  return c;
+}
+
+function actualizarStats(){
+  var c = contar();
+  el.nPresente.textContent = c.presente;
+  el.nAusente.textContent = c.ausente;
+  el.nTarde.textContent = c.tarde;
+  el.nTotal.textContent = c.total;
+}
+
+/* ============================ Borrador por fecha ============================ */
+
+function cargarBorrador(fecha){
+  if (!alumnos.length) return;
+  marcas = alumnos.map(function(){ return 'presente'; });
+  el.observaciones.value = '';
+
+  var guardado = lsGet(K_BORRADOR + fecha);
+  if (guardado) {
+    try {
+      var b = JSON.parse(guardado);
+      if (Array.isArray(b.marcas) && b.huella === huellaLista(alumnos)) {
+        for (var i = 0; i < b.marcas.length && i < marcas.length; i++) {
+          if (ESTADOS.indexOf(b.marcas[i]) !== -1) marcas[i] = b.marcas[i];
+        }
+        el.observaciones.value = b.observaciones || '';
+        mostrarEstado('Se recuperó lo marcado para el ' + fechaLarga(fecha).toLowerCase() + '.', 'ok');
+      } else if (Array.isArray(b.marcas)) {
+        mostrarEstado('La lista de alumnos cambió: se reiniciaron las marcas de este día.', 'aviso');
+      }
+    } catch (e) { /* borrador dañado: se ignora */ }
+  }
+
+  sincronizarRadios();
+  actualizarStats();
+}
+
+function guardarBorrador(){
+  if (!alumnos.length) return;
+  var ok = lsSet(K_BORRADOR + el.fecha.value, JSON.stringify({
+    marcas: marcas.slice(),
+    observaciones: el.observaciones.value,
+    huella: huellaLista(alumnos),
+    actualizado: Date.now()
+  }));
+  if (ok) mostrarEstado('Borrador guardado automáticamente en este navegador.', 'ok');
+}
+
+function guardarBorradorDiferido(){
+  clearTimeout(timerGuardado);
+  timerGuardado = setTimeout(guardarBorrador, 400);
+}
+
+/* ============================ Aviso de carga ============================ */
+
+function mostrarAviso(tipo, texto, acciones){
+  el.aviso.className = 'aviso show no-print ' + tipo;
+  el.avisoTexto.innerHTML = texto;
+  el.avisoAcciones.innerHTML = acciones.map(function(a){
+    return '<button type="button" class="btn" data-accion="' + a.accion + '">' + a.texto + '</button>';
+  }).join('');
+}
+
+function ocultarAviso(){
+  el.aviso.className = 'aviso no-print';
+  el.avisoTexto.innerHTML = '';
+  el.avisoAcciones.innerHTML = '';
+}
+
+function actualizarAviso(){
+  if (!alumnos.length) {
+    mostrarAviso('warn',
+      '<strong>No se pudo cargar <code>alumnos.json</code> automáticamente.</strong> '
+      + 'El navegador no deja leer archivos locales cuando abres la página con doble clic. '
+      + 'Elige el archivo (o arrástralo aquí) una sola vez: la lista queda guardada en este navegador.',
+      [{ accion: 'cargar', texto: 'Elegir alumnos.json' }]);
+    return;
+  }
+
+  if (origenLista === 'cache') {
+    mostrarAviso('info',
+      'Usando la lista guardada en este navegador (<strong>' + alumnos.length + ' alumnos</strong>). '
+      + 'Si cambiaste nombres en <code>alumnos.json</code>, cárgalo de nuevo para actualizarla.',
+      [{ accion: 'cargar', texto: 'Actualizar lista' }]);
+    return;
+  }
+
+  ocultarAviso();
+}
+
+/* ============================ PDF ============================ */
+
+function generarPDF(){
+  if (!alumnos.length) { alert('Primero carga la lista de alumnos.'); return; }
+  if (!(window.jspdf && window.jspdf.jsPDF)) {
+    alert('No se pudo cargar el generador de PDF (jsPDF).\nRevisa tu conexión a internet y recarga la página.');
+    return;
+  }
+
+  var jsPDF = window.jspdf.jsPDF;
+  var fechaISO = el.fecha.value || isoLocal(new Date());
+  var doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+
+  var M = 15;
+  var ANCHO = 180;
+  var COL_N = 12;
+  var COL_EST = 34;
+  var COL_AL = ANCHO - COL_N - COL_EST;
+  var X0 = M;
+  var X1 = M + COL_N;
+  var X2 = X1 + COL_AL;
+  var X3 = M + ANCHO;
+  var y = 20;
+
+  function cabecera(){
+    doc.setFillColor(30, 75, 143);
+    doc.rect(M, y, ANCHO, 8, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.setTextColor(255, 255, 255);
+    doc.text('Nº', X0 + COL_N / 2, y + 5.4, { align: 'center' });
+    doc.text('Apellidos y nombres', X1 + 3, y + 5.4);
+    doc.text('Asistencia', (X2 + X3) / 2, y + 5.4, { align: 'center' });
+    y += 8;
+  }
+
+  try {
+    if (datos.institucion) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(120, 132, 148);
+      doc.text(datos.institucion.toUpperCase(), M, y);
+      y += 6;
+    }
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(17);
+    doc.setTextColor(30, 75, 143);
+    doc.text('Control de Asistencia', M, y);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.5);
+    doc.setTextColor(110, 122, 138);
+    doc.text('Fecha: ' + fechaLarga(fechaISO), M + ANCHO, y, { align: 'right' });
+    y += 7;
+
+    doc.setFontSize(10.5);
+    doc.setTextColor(40, 52, 68);
+    var subtitulo = 'Curso: ' + (datos.curso || '—');
+    if (datos.profesora) subtitulo += '    ·    Profesora: ' + datos.profesora;
+    doc.text(subtitulo, M, y);
+    y += 3;
+
+    doc.setDrawColor(30, 75, 143);
+    doc.setLineWidth(0.6);
+    doc.line(M, y, M + ANCHO, y);
+    y += 6;
+
+    cabecera();
+
+    doc.setLineWidth(0.2);
+    for (var i = 0; i < alumnos.length; i++) {
+      var marca = marcas[i] || 'presente';
+      var color = COLORES[marca] || COLORES.presente;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      var lineas = doc.splitTextToSize(alumnos[i], COL_AL - 6);
+      var alto = Math.max(7.6, lineas.length * 4.6 + 3);
+
+      if (y + alto > 250) {
+        doc.addPage();
+        y = 18;
+        cabecera();
+      }
+
+      if (i % 2 === 1) {
+        doc.setFillColor(246, 249, 253);
+        doc.rect(M, y, ANCHO, alto, 'F');
+      }
+
+      doc.setDrawColor(214, 221, 230);
+      doc.rect(M, y, ANCHO, alto);
+      doc.line(X1, y, X1, y + alto);
+      doc.line(X2, y, X2, y + alto);
+
+      doc.setTextColor(105, 118, 133);
+      doc.setFontSize(8.5);
+      doc.text(String(i + 1), X0 + COL_N / 2, y + alto / 2 + 1.2, { align: 'center' });
+
+      doc.setTextColor(28, 39, 51);
+      doc.setFontSize(9.5);
+      doc.text(lineas, X1 + 3, y + alto / 2 - (lineas.length - 1) * 2.3 + 1.3);
+
+      doc.setTextColor(color[0], color[1], color[2]);
+      doc.setFont('helvetica', 'bold');
+      doc.text(ETIQUETAS[marca], (X2 + X3) / 2, y + alto / 2 + 1.2, { align: 'center' });
+
+      y += alto;
+    }
+
+    var c = contar();
+    y += 8;
+    if (y > 238) { doc.addPage(); y = 22; }
+
+    doc.setFillColor(234, 241, 251);
+    doc.setDrawColor(200, 214, 235);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(M, y, ANCHO, 16, 2, 2, 'FD');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(30, 75, 143);
+    doc.text('Resumen del día', M + 5, y + 6.5);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(60, 72, 88);
+    doc.text('Presentes: ' + c.presente + '    ·    Ausentes: ' + c.ausente
+      + '    ·    Tardes: ' + c.tarde + '    ·    Total: ' + c.total, M + 5, y + 12.2);
+    y += 26;
+
+    var obs = el.observaciones.value.trim();
+    if (obs) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(30, 75, 143);
+      doc.text('Observaciones', M, y);
+      y += 5;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      doc.setTextColor(40, 52, 68);
+      var lineasObs = doc.splitTextToSize(obs, ANCHO);
+      if (y + lineasObs.length * 4.6 > 262) { doc.addPage(); y = 25; }
+      doc.text(lineasObs, M, y);
+      y += lineasObs.length * 4.6 + 6;
+    }
+
+    y += 14;
+    if (y > 268) { doc.addPage(); y = 45; }
+
+    doc.setDrawColor(120, 132, 148);
+    doc.setLineWidth(0.3);
+    doc.line(M + 40, y, M + 110, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(90, 102, 118);
+    doc.text('Firma de la profesora', M + 75, y + 5, { align: 'center' });
+
+    var paginas = doc.getNumberOfPages();
+    for (var p = 1; p <= paginas; p++) {
+      doc.setPage(p);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(150, 160, 172);
+      doc.text('Página ' + p + ' de ' + paginas, M + ANCHO / 2, 289, { align: 'center' });
+      doc.text(fechaLarga(fechaISO), M + ANCHO, 289, { align: 'right' });
+    }
+
+    doc.save(nombreArchivo('pdf'));
+    mostrarEstado('PDF guardado: ' + nombreArchivo('pdf'), 'ok');
+  } catch (e) {
+    console.error(e);
+    alert('Ocurrió un error al generar el PDF:\n' + e.message);
+  }
+}
+
+/* ============================ CSV ============================ */
+
+function exportarCSV(){
+  if (!alumnos.length) { alert('Primero carga la lista de alumnos.'); return; }
+
+  function celda(valor){
+    var s = String(valor);
+    return /[;"\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+
+  var filas = [['Nº', 'Apellidos y nombres', 'Asistencia', 'Fecha']];
+  for (var i = 0; i < alumnos.length; i++) {
+    filas.push([i + 1, alumnos[i], ETIQUETAS[marcas[i] || 'presente'], el.fecha.value]);
+  }
+
+  var csv = '\uFEFF' + filas.map(function(f){ return f.map(celda).join(';'); }).join('\r\n');
+  descargar(new Blob([csv], { type: 'text/csv;charset=utf-8;' }), nombreArchivo('csv'));
+  mostrarEstado('CSV guardado: ' + nombreArchivo('csv'), 'ok');
+}
+
+/* ============================ Eventos ============================ */
+
+el.cuerpo.addEventListener('change', function(e){
+  var input = e.target;
+  if (!input || input.type !== 'radio') return;
+
+  var fila = input.closest('tr');
+  if (!fila) return;
+
+  var indice = Number(fila.dataset.i);
+  var valor = input.value;
+  if (ESTADOS.indexOf(valor) === -1) return;
+
+  marcas[indice] = valor;
+  fila.dataset.estado = valor;
+  actualizarStats();
+  guardarBorrador();
+});
+
+el.btnTodosPresentes.addEventListener('click', function(){ marcarTodos('presente'); });
+el.btnTodosAusentes.addEventListener('click', function(){ marcarTodos('ausente'); });
+
+el.btnCargar.addEventListener('click', function(){ el.fileJSON.click(); });
+
+el.fileJSON.addEventListener('change', function(){
+  var archivo = el.fileJSON.files && el.fileJSON.files[0];
+  if (archivo) leerArchivoJSON(archivo);
+  el.fileJSON.value = '';
+});
+
+el.fecha.addEventListener('change', function(){
+  if (!el.fecha.value) el.fecha.value = isoLocal(new Date());
+  el.fechaLarga.textContent = fechaLarga(el.fecha.value);
+  cargarBorrador(el.fecha.value);
+});
+
+el.observaciones.addEventListener('input', guardarBorradorDiferido);
+
+el.btnPDF.addEventListener('click', generarPDF);
+el.btnCSV.addEventListener('click', exportarCSV);
+el.btnImprimir.addEventListener('click', function(){ window.print(); });
+
+document.addEventListener('click', function(e){
+  var boton = e.target.closest('[data-accion]');
+  if (!boton) return;
+  if (boton.dataset.accion === 'cargar') el.fileJSON.click();
+});
+
+['dragover', 'dragenter'].forEach(function(evento){
+  document.addEventListener(evento, function(e){ e.preventDefault(); });
+});
+
+document.addEventListener('drop', function(e){
+  e.preventDefault();
+  var archivo = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if (!archivo) return;
+  if (!/\.json$/i.test(archivo.name)) {
+    alert('Arrastra el archivo alumnos.json.');
+    return;
+  }
+  leerArchivoJSON(archivo);
+});
+
+/* ============================ Arranque ============================ */
+
+el.fecha.value = isoLocal(new Date());
+el.fechaLarga.textContent = fechaLarga(el.fecha.value);
+el.btnPDF.disabled = true;
+el.btnCSV.disabled = true;
+
+cargarListaInicial();
+
+})();
+</script>
+</body>
+</html>
